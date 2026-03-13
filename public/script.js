@@ -22,6 +22,7 @@ const socket = io();
     let messageReactions = {};
     let typingTimer;
     let nextMessageId = 100;
+    let pendingFriendRequests = []; // Store incoming requests
     
     let pomodoroTimer = {
       timeLeft: 25 * 60,
@@ -625,20 +626,79 @@ const socket = io();
 
         if (currentUser && name !== currentUser.name) {
           const currentUserObj = users.find(u => u.email === currentUser.email);
-          if (!currentUserObj.friends.includes(name)) {
+          // Check if they're already friends
+          const isFriend = currentUserObj.friends.includes(name);
+          // Check if there's a pending request
+          const hasPendingRequest = pendingFriendRequests.includes(name);
+          
+          if (!isFriend && !hasPendingRequest) {
             const addIcon = document.createElement('i');
             addIcon.className = 'fas fa-user-plus add-friend';
-            addIcon.title = 'Add friend';
+            addIcon.title = 'Send friend request';
             addIcon.onclick = (e) => {
               e.stopPropagation();
-              addFriend(name);
+              sendFriendRequest(name);
             };
             li.appendChild(addIcon);
+          } else if (hasPendingRequest) {
+            const pendingSpan = document.createElement('span');
+            pendingSpan.className = 'pending-request';
+            pendingSpan.innerHTML = '⏳ Pending';
+            pendingSpan.style.color = 'var(--warning)';
+            pendingSpan.style.fontSize = '0.8rem';
+            pendingSpan.style.marginLeft = '5px';
+            li.appendChild(pendingSpan);
           }
         }
         onlineListEl.appendChild(li);
       });
       onlineCount.innerText = usersList.length;
+    }
+
+    // New function to send friend request
+    function sendFriendRequest(friendName) {
+      if (!currentUser) return;
+      
+      socket.emit('send-friend-request', {
+        from: currentUser.name,
+        to: friendName
+      });
+      
+      showToast(`Friend request sent to ${friendName}`, 'info');
+      
+      // Add to pending list locally
+      pendingFriendRequests.push(friendName);
+      
+      // Update online list
+      const onlineNames = [...document.querySelectorAll('.online-list li .name')].map(el => el.innerText.trim());
+      renderOnlineUsers(onlineNames);
+    }
+
+    // Function to accept friend request
+    function acceptFriendRequest(fromName) {
+      if (!currentUser) return;
+      
+      socket.emit('accept-friend-request', {
+        from: fromName,
+        to: currentUser.name
+      });
+      
+      // Add to friends list
+      const current = users.find(u => u.email === currentUser.email);
+      const friend = users.find(u => u.name === fromName);
+      
+      if (current && friend) {
+        current.friends.push(fromName);
+        friend.friends.push(currentUser.name);
+        currentUser.friends = current.friends;
+      }
+      
+      // Remove from pending requests
+      pendingFriendRequests = pendingFriendRequests.filter(name => name !== fromName);
+      
+      // Update UI
+      buildChannelList();
+      showToast(`You are now friends with ${fromName}! 🎉`, 'success');
     }
 
     function addFriend(friendName) {
@@ -685,12 +745,23 @@ const socket = io();
       const text = chatInput.value.trim();
       if (!text) return;
 
-      // Send message through socket
-      socket.emit('send-message', {
-        room: currentChannel,
-        user: currentUser.name,
-        text: text
-      });
+      // Check if this is a private message
+      if (currentChannel.startsWith('dm:')) {
+        const friendName = currentChannel.substring(3);
+        socket.emit('private-message', {
+          to: friendName,
+          from: currentUser.name,
+          text: text,
+          room: currentChannel
+        });
+      } else {
+        // Send message through socket for group chat
+        socket.emit('send-message', {
+          room: currentChannel,
+          user: currentUser.name,
+          text: text
+        });
+      }
 
       chatInput.value = '';
       typingIndicator.innerText = '';
@@ -1102,7 +1173,7 @@ const socket = io();
       if (friendName) {
         const friend = users.find(u => u.name === friendName);
         if (friend) {
-          addFriend(friendName);
+          sendFriendRequest(friendName);
         } else {
           showToast('User not found', 'error');
         }
@@ -1110,10 +1181,15 @@ const socket = io();
     };
 
     window.startDM = function(friendName) {
-      addFriend(friendName);
-      switchToChannel(`dm:${friendName}`);
-      searchResults.style.display = 'none';
-      if (searchInput) searchInput.value = '';
+      // Check if they're friends first
+      const current = users.find(u => u.email === currentUser.email);
+      if (current && current.friends.includes(friendName)) {
+        switchToChannel(`dm:${friendName}`);
+        searchResults.style.display = 'none';
+        if (searchInput) searchInput.value = '';
+      } else {
+        showToast(`You are not friends with ${friendName} yet`, 'warning');
+      }
     };
 
     window.jumpToMessage = function(channel) {
@@ -1199,6 +1275,12 @@ const socket = io();
           reactions: []
         });
         renderMessages(messages[data.room]);
+        
+        // Play sound if it's a private message from someone else
+        if (data.isPrivate && data.user !== currentUser?.name) {
+          playNotificationSound();
+          showToast(`Private message from ${data.user}`, 'info');
+        }
       }
     });
 
@@ -1207,7 +1289,7 @@ const socket = io();
       renderOnlineUsers(onlineNames);
     });
 
-    // Add this new event listener for message history
+    // Message history
     socket.on('message-history', (data) => {
       if (data.room === currentChannel && data.messages.length > 0) {
         messages[data.room] = data.messages.map(msg => ({
@@ -1219,6 +1301,71 @@ const socket = io();
         }));
         renderMessages(messages[data.room]);
       }
+    });
+
+    // Friend request received
+    socket.on('friend-request', (data) => {
+      const { from } = data;
+      
+      // Add to pending requests
+      pendingFriendRequests.push(from);
+      
+      // Show notification with accept/decline buttons
+      const toast = document.createElement('div');
+      toast.className = 'toast info';
+      toast.innerHTML = `
+        <i class="fas fa-user-friends"></i>
+        <span>
+          <strong>${from}</strong> sent you a friend request
+          <div style="margin-top: 10px;">
+            <button onclick="acceptFriendRequest('${from}')" class="btn" style="padding: 5px 10px; margin-right: 5px;">Accept</button>
+            <button class="btn btn-outline" style="padding: 5px 10px;">Decline</button>
+          </div>
+        </span>
+      `;
+      toastContainer.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 10000);
+      
+      playNotificationSound();
+    });
+
+    // Friend request sent confirmation
+    socket.on('friend-request-sent', (data) => {
+      showToast(data.message, 'success');
+    });
+
+    // Friend request error
+    socket.on('friend-request-error', (data) => {
+      showToast(data.message, 'error');
+    });
+
+    // Friend request accepted
+    socket.on('friend-request-accepted', (data) => {
+      const { by } = data;
+      
+      // Add to friends list
+      const current = users.find(u => u.email === currentUser.email);
+      const friend = users.find(u => u.name === by);
+      
+      if (current && friend) {
+        current.friends.push(by);
+        friend.friends.push(currentUser.name);
+        currentUser.friends = current.friends;
+      }
+      
+      // Remove from pending
+      pendingFriendRequests = pendingFriendRequests.filter(name => name !== by);
+      
+      // Update UI
+      buildChannelList();
+      showToast(`${by} accepted your friend request! 🎉`, 'success');
+      
+      // Update online list
+      const onlineNames = [...document.querySelectorAll('.online-list li .name')].map(el => el.innerText.trim());
+      renderOnlineUsers(onlineNames);
     });
 
     console.log('BMC Study Buddy with Zoom Meet integration loaded!');
