@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const fs = require('fs');
+const mongoose = require('mongoose');
 
 const app = express();
 const server = http.createServer(app);
@@ -9,18 +9,26 @@ const io = socketIo(server);
 
 app.use(express.static('public'));
 
+// Connect to MongoDB
+const MONGODB_URI = 'mongodb+srv://landonduvall09_db_user:puO3oEU7dercmoQz@bmc-study-cluster.pkjrcrm.mongodb.net/bmc-study-buddy?retryWrites=true&w=majority';
+
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
+
+// Define Message Schema
+const messageSchema = new mongoose.Schema({
+  room: String,
+  user: String,
+  text: String,
+  timestamp: { type: Date, default: Date.now },
+  isPrivate: { type: Boolean, default: false }
+});
+
+const Message = mongoose.model('Message', messageSchema);
+
 const users = new Map();
 const nameToSocket = new Map();
-
-// Message persistence
-let savedMessages = {};
-try {
-  const data = fs.readFileSync('./messages.json', 'utf8');
-  savedMessages = JSON.parse(data);
-  console.log('Loaded saved messages');
-} catch (err) {
-  console.log('No existing messages file, starting fresh');
-}
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -38,22 +46,85 @@ io.on('connection', (socket) => {
     socket.join(data.room);
   });
 
-  socket.on('send-message', (data) => {
+  // Group chat messages
+  socket.on('send-message', async (data) => {
+    // Save to MongoDB
+    const message = new Message({
+      room: data.room,
+      user: data.user,
+      text: data.text,
+      timestamp: new Date()
+    });
+    await message.save();
+
+    // Send to clients
     io.to(data.room).emit('receive-message', {
       room: data.room,
       user: data.user,
       text: data.text,
       timestamp: Date.now()
     });
+  });
+
+  // Private messages
+  socket.on('private-message', async (data) => {
+    const { to, from, text, room } = data;
     
-    // Save message to file
-    if (!savedMessages[data.room]) savedMessages[data.room] = [];
-    savedMessages[data.room].push({
-      user: data.user,
-      text: data.text,
-      timestamp: Date.now()
+    // Save to MongoDB
+    const message = new Message({
+      room: room,
+      user: from,
+      text: text,
+      timestamp: new Date(),
+      isPrivate: true
     });
-    fs.writeFileSync('./messages.json', JSON.stringify(savedMessages, null, 2));
+    await message.save();
+    
+    // Find the recipient's socket
+    const recipientSocketId = nameToSocket.get(to);
+    
+    if (recipientSocketId) {
+      // Send to recipient
+      io.to(recipientSocketId).emit('receive-message', {
+        room: room,
+        user: from,
+        text: text,
+        timestamp: Date.now(),
+        isPrivate: true
+      });
+      
+      // Send back to sender
+      socket.emit('receive-message', {
+        room: room,
+        user: from,
+        text: text,
+        timestamp: Date.now(),
+        isPrivate: true
+      });
+    } else {
+      socket.emit('receive-message', {
+        room: 'System',
+        user: 'System',
+        text: `User ${to} is not online`,
+        timestamp: Date.now()
+      });
+    }
+  });
+
+  // Get message history
+  socket.on('get-message-history', async (room) => {
+    const messages = await Message.find({ room })
+      .sort('timestamp')
+      .limit(100);
+    
+    socket.emit('message-history', {
+      room: room,
+      messages: messages.map(m => ({
+        user: m.user,
+        text: m.text,
+        timestamp: m.timestamp.getTime()
+      }))
+    });
   });
 
   socket.on('disconnect', () => {
