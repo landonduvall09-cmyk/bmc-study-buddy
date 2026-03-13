@@ -27,6 +27,21 @@ const messageSchema = new mongoose.Schema({
 
 const Message = mongoose.model('Message', messageSchema);
 
+// Add User Schema for friend requests
+const userSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  password: String,
+  friends: [{ type: String }], // array of friend names
+  friendRequests: [{
+    from: String,
+    status: { type: String, default: 'pending' }, // 'pending', 'accepted', 'declined'
+    timestamp: { type: Date, default: Date.now }
+  }]
+});
+
+const User = mongoose.model('User', userSchema);
+
 const users = new Map();
 const nameToSocket = new Map();
 
@@ -124,6 +139,49 @@ io.on('connection', (socket) => {
         text: m.text,
         timestamp: m.timestamp.getTime()
       }))
+    });
+  });
+
+  // Send friend request
+  socket.on('send-friend-request', async (data) => {
+    const { from, to } = data;
+    
+    // Find the recipient's socket
+    const recipientSocketId = nameToSocket.get(to);
+    
+    // Store in database (we'll do this properly later)
+    if (recipientSocketId) {
+      io.to(recipientSocketId).emit('friend-request', {
+        from: from,
+        timestamp: Date.now()
+      });
+      
+      socket.emit('friend-request-sent', {
+        to: to,
+        message: `Friend request sent to ${to}`
+      });
+    } else {
+      socket.emit('friend-request-error', {
+        message: `User ${to} is not online`
+      });
+    }
+  });
+
+  // Accept friend request
+  socket.on('accept-friend-request', async (data) => {
+    const { from, to } = data;
+    
+    const recipientSocketId = nameToSocket.get(from);
+    
+    if (recipientSocketId) {
+      io.to(recipientSocketId).emit('friend-request-accepted', {
+        by: to
+      });
+    }
+    
+    socket.emit('friend-request-accepted', {
+      by: to,
+      to: from
     });
   });
 
