@@ -480,6 +480,9 @@ const socket = io();
       if (activeItem) activeItem.classList.add('active');
       loadChannel(ch);
       
+      // Request message history for this channel
+      socket.emit('get-message-history', ch);
+      
       // Tell server we joined this room
       socket.emit('join-room', { room: ch });
     }
@@ -1202,6 +1205,20 @@ const socket = io();
     socket.on('user-list', (userList) => {
       const onlineNames = userList.map(u => u.name);
       renderOnlineUsers(onlineNames);
+    });
+
+    // Add this new event listener for message history
+    socket.on('message-history', (data) => {
+      if (data.room === currentChannel && data.messages.length > 0) {
+        messages[data.room] = data.messages.map(msg => ({
+          id: nextMessageId++,
+          sender: msg.user,
+          text: msg.text,
+          timestamp: msg.timestamp,
+          reactions: []
+        }));
+        renderMessages(messages[data.room]);
+      }
     });
 
     console.log('BMC Study Buddy with Zoom Meet integration loaded!');
