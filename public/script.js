@@ -1,4 +1,6 @@
-const socket = io();
+const socket = io({
+  transports: ['polling'] // Force HTTP polling instead of WebSockets
+});
 
 (function() {
     // ---------- COURSE DATA ----------
