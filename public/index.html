@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>BMC Study Buddy · Zoom Integration</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-mart@latest/css/emoji-mart.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Navigation -->
+<div class="navbar">
+  <div class="logo" onclick="showSection('home')">
+    <i class="fas fa-graduation-cap"></i>
+    <span>BMC Study Buddy</span>
+  </div>
+  <div class="nav-links">
+    <a data-section="home" class="active"><i class="fas fa-home"></i> Home</a>
+    <a data-section="about"><i class="fas fa-info-circle"></i> About</a>
+    <a data-section="how"><i class="fas fa-question-circle"></i> How It Works</a>
+    <a data-section="join"><i class="fas fa-sign-in-alt"></i> Join</a>
+    <a data-section="dashboard" id="dashboard-nav-link" style="display:none;"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+    <a data-section="resources" id="resources-nav-link" style="display:none;"><i class="fas fa-book"></i> Resources</a>
+    <div class="toggle-icons">
+      <i class="fas fa-sun" id="theme-toggle" onclick="toggleTheme()" title="Toggle theme"></i>
+      <i class="fas fa-heart" id="friends-toggle" onclick="toggleFriendsMode()" title="Friends mode"></i>
+      <i class="fas fa-bell" id="notifications-toggle" onclick="showNotifications()" title="Notifications"></i>
+    </div>
+  </div>
+</div>
+
+<!-- Main Container -->
+<div class="container">
+  <!-- HOME SECTION -->
+  <div id="home-section" class="section active-section">
+    <div class="hero" style="text-align: center; margin-bottom: 3rem;">
+      <h1 style="font-size: 3.5rem; margin-bottom: 1rem;">Welcome to <span style="color: var(--accent-green);">BMC Study Buddy</span></h1>
+      <p style="color: var(--text-secondary); font-size: 1.2rem; max-width: 600px; margin: 0 auto;">
+        Your all-in-one study companion with Zoom integration!
+      </p>
+    </div>
+    
+    <div class="card-grid">
+      <div class="card">
+        <i class="fas fa-users"></i>
+        <h3>Study Together</h3>
+        <p>Join live study sessions with classmates.</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-question-circle"></i>
+        <h3>Homework Help</h3>
+        <p>Get instant help in subject channels.</p>
+      </div>
+      <div class="card">
+        <i class="fab fa-zoom" style="color: var(--google-blue);"></i>
+        <h3>Zoom</h3>
+        <p>Create and share meeting links instantly.</p>
+      </div>
+    </div>
+
+    <!-- Pomodoro Timer Preview -->
+    <div class="pomodoro-timer" style="margin-top: 2rem;">
+      <h2 style="text-align: center; margin-bottom: 1rem;">📚 Study Timer</h2>
+      <div class="timer-display" id="pomodoro-display-home">25:00</div>
+      <div class="timer-controls">
+        <button class="btn" onclick="startPomodoro()"><i class="fas fa-play"></i> Start</button>
+        <button class="btn btn-outline" onclick="pausePomodoro()"><i class="fas fa-pause"></i> Pause</button>
+        <button class="btn btn-outline" onclick="resetPomodoro()"><i class="fas fa-redo"></i> Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT SECTION -->
+  <div id="about-section" class="section">
+    <h1 style="font-size: 3rem; margin-bottom: 2rem;">About BMC Study Buddy</h1>
+    <div class="card-grid">
+      <div class="card">
+        <i class="fas fa-users"></i>
+        <h2>Who We Are</h2>
+        <p>"For students, by students." A collaborative environment built by BMC students.</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-bullseye"></i>
+        <h2>Our Mission</h2>
+        <p>Helping students succeed through collaboration and peer support.</p>
+      </div>
+      <div class="card">
+        <i class="fas fa-heart"></i>
+        <h2>Community</h2>
+        <p>A supportive study environment where students help each other.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS SECTION -->
+  <div id="how-section" class="section">
+    <h1 style="font-size: 3rem; text-align: center; margin-bottom: 2rem;">How It Works</h1>
+    <div class="steps-container" style="display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center;">
+      <div class="card" style="flex: 1 1 200px; text-align: center;">
+        <div class="step-number" style="background: var(--accent-green); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-weight: bold;">1</div>
+        <i class="fas fa-user-plus"></i>
+        <h3>Create Account</h3>
+        <p>Sign up with your school email</p>
+      </div>
+      <div class="card" style="flex: 1 1 200px; text-align: center;">
+        <div class="step-number" style="background: var(--accent-green); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-weight: bold;">2</div>
+        <i class="fas fa-book-open"></i>
+        <h3>Select Classes</h3>
+        <p>Choose your current courses</p>
+      </div>
+      <div class="card" style="flex: 1 1 200px; text-align: center;">
+        <div class="step-number" style="background: var(--accent-green); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-weight: bold;">3</div>
+        <i class="fas fa-comments"></i>
+        <h3>Join Channels</h3>
+        <p>Participate in discussions</p>
+      </div>
+      <div class="card" style="flex: 1 1 200px; text-align: center;">
+        <div class="step-number" style="background: var(--accent-green); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; color: white; font-weight: bold;">4</div>
+        <i class="fab fa-zoom" style="color: var(--google-blue);"></i>
+        <h3>Zoom</h3>
+        <p>Create and share meeting links</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOIN / LOGIN SECTION -->
+  <div id="join-section" class="section">
+    <div class="auth-card">
+      <h2 style="margin-bottom: 1.5rem; text-align: center;">Welcome to BMC Study Buddy</h2>
+      
+      <!-- Login Form -->
+      <div id="login-form">
+        <div class="form-group">
+          <label><i class="fas fa-envelope"></i> School email (@bmcchs.org)</label>
+          <input type="email" id="login-email" placeholder="student@bmcchs.org">
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Password</label>
+          <input type="password" id="login-password" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label style="display: flex; align-items: center; gap: 0.5rem;">
+            <input type="checkbox" id="remember-me"> Remember me
+          </label>
+        </div>
+        <button class="btn" style="width:100%;" onclick="handleLogin()">
+          <i class="fas fa-sign-in-alt"></i> Log In
+        </button>
+        <div class="toggle-link" onclick="showRegisterForm()">
+          Don't have an account? Register
+        </div>
+        <div class="toggle-link" onclick="showForgotPassword()">
+          Forgot password?
+        </div>
+        <div id="login-error" class="error-msg"></div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="register-form" style="display:none;">
+        <div class="form-group">
+          <label><i class="fas fa-user"></i> Full name</label>
+          <input type="text" id="reg-name" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-envelope"></i> School email (@bmcchs.org)</label>
+          <input type="email" id="reg-email" placeholder="student@bmcchs.org">
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-graduation-cap"></i> Grade</label>
+          <select id="reg-grade">
+            <option>9th Grade</option>
+            <option>10th Grade</option>
+            <option>11th Grade</option>
+            <option>12th Grade</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-book"></i> Select your classes</label>
+          <div id="course-checkboxes-container" class="course-checkboxes"></div>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Password</label>
+          <input type="password" id="reg-password" placeholder="••••••••">
+          <small style="color: var(--text-muted);">Minimum 8 characters</small>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-lock"></i> Confirm Password</label>
+          <input type="password" id="reg-confirm-password" placeholder="••••••••">
+        </div>
+        <button class="btn" style="width:100%;" onclick="handleRegister()">
+          <i class="fas fa-user-plus"></i> Register
+        </button>
+        <div class="toggle-link" onclick="showLoginForm()">
+          Back to login
+        </div>
+        <div id="register-error" class="error-msg"></div>
+      </div>
+
+      <!-- Forgot Password Form -->
+      <div id="forgot-form" style="display:none;">
+        <div class="form-group">
+          <label><i class="fas fa-envelope"></i> School email</label>
+          <input type="email" id="forgot-email" placeholder="student@bmcchs.org">
+        </div>
+        <button class="btn" style="width:100%;" onclick="handleForgotPassword()">
+          <i class="fas fa-paper-plane"></i> Send Reset Link
+        </button>
+        <div class="toggle-link" onclick="showLoginForm()">
+          Back to login
+        </div>
+        <div id="forgot-error" class="error-msg"></div>
+        <div id="forgot-success" class="success-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD SECTION -->
+  <div id="dashboard-section" class="section">
+    <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h2><i class="fas fa-tachometer-alt" style="color: var(--accent-green);"></i> Study Dashboard</h2>
+        <p>Welcome back, <span id="current-user-name" style="color: var(--accent-green); font-weight: 600;"></span>!</p>
+      </div>
+      <div style="display: flex; gap: 1rem;">
+        <button class="btn btn-outline" onclick="showPomodoroModal()">
+          <i class="fas fa-clock"></i> Pomodoro
+        </button>
+        <button class="btn btn-outline" onclick="logout()">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" id="global-search" placeholder="Search messages, users, or resources..." oninput="handleSearch(this.value)">
+      <div id="search-results" class="search-results" style="display:none;"></div>
+    </div>
+
+    <div class="dashboard-panels">
+      <!-- Left Sidebar -->
+      <div class="left-sidebar">
+        <!-- Channels Section -->
+        <div class="sidebar-section">
+          <div class="sidebar-heading">
+            <span><i class="fas fa-hashtag"></i> Channels</span>
+            <i class="fas fa-plus" onclick="createChannel()" title="Create channel"></i>
+          </div>
+          <ul class="channel-list" id="channel-list"></ul>
+        </div>
+
+        <!-- Your Classes Section -->
+        <div class="sidebar-section">
+          <div class="sidebar-heading">
+            <span><i class="fas fa-book"></i> Your Classes</span>
+            <i class="fas fa-sync" onclick="refreshClasses()" title="Refresh"></i>
+          </div>
+          <ul class="class-list" id="class-list"></ul>
+        </div>
+
+        <!-- Direct Messages Section -->
+        <div class="sidebar-section">
+          <div class="sidebar-heading">
+            <span><i class="fas fa-envelope"></i> Direct Messages</span>
+            <i class="fas fa-user-plus" onclick="startNewDM()" title="New message"></i>
+          </div>
+          <ul class="dm-list" id="dm-list"></ul>
+        </div>
+
+        <!-- Study Groups Section -->
+        <div class="sidebar-section">
+          <div class="sidebar-heading">
+            <span><i class="fas fa-users"></i> Study Groups</span>
+            <i class="fas fa-plus" onclick="createStudyGroup()" title="Create group"></i>
+          </div>
+          <ul class="study-group-list" id="study-group-list"></ul>
+        </div>
+      </div>
+
+      <!-- Center Chat Panel -->
+      <div class="center-panel">
+        <div class="chat-header" id="current-channel-header">
+          <span><i class="fas fa-hashtag"></i> <span id="channel-name">Global Lounge</span></span>
+          <div class="chat-header-actions">
+            <i class="fab fa-zoom" onclick="createZoomMeet()" title="Create Zoom Meet" style="color: white;"></i>
+            <i class="fas fa-calendar-plus" onclick="scheduleCall()" title="Schedule a call"></i>
+            <i class="fas fa-info-circle" onclick="showChannelInfo()" title="Channel info"></i>
+          </div>
+        </div>
+
+        <div class="message-feed" id="message-feed"></div>
+
+        <div class="typing-indicator" id="typing-indicator"></div>
+
+        <div class="chat-input-area">
+          <button id="emoji-btn" onclick="toggleEmojiPicker()"><i class="fas fa-smile"></i></button>
+          <input type="text" id="chat-input" placeholder="Type a message..." autocomplete="off">
+          <button id="upload-btn" onclick="document.getElementById('file-input').click()">
+            <i class="fas fa-paperclip"></i>
+          </button>
+          <button id="zoom-meet-btn" onclick="createZoomMeet()" title="Create Zoom Meet">
+            <i class="fab fa-zoom"></i>
+          </button>
+          <button id="send-btn" onclick="sendMessage()">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+          <input type="file" id="file-input" style="display:none;" accept="image/*, .pdf, .doc, .docx" multiple>
+        </div>
+
+        <!-- Emoji Picker -->
+        <div id="emoji-picker" class="emoji-picker"></div>
+      </div>
+
+      <!-- Right Sidebar - Online Users -->
+      <div class="right-sidebar">
+        <h3><i class="fas fa-circle" style="color: var(--success); font-size: 0.8rem;"></i> Online — <span id="online-count">0</span></h3>
+        <ul class="online-list" id="online-list"></ul>
+
+        <!-- Zoom Quick Access -->
+        <div style="margin-top: 2rem;">
+          <h3><i class="fab fa-zoom" style="color: var(--google-blue);"></i> Quick Meet</h3>
+          <button class="zoom-meet-btn" style="width:100%; margin-top:1rem;" onclick="createZoomMeet()">
+            <i class="fas fa-video"></i> New Zoom Meet
+          </button>
+          <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.5rem;">
+            Click to open Zoom Meet. Share the meeting code with others.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESOURCES SECTION -->
+  <div id="resources-section" class="section">
+    <h2 style="margin-bottom: 2rem;"><i class="fas fa-book" style="color: var(--accent-green);"></i> Study Resources</h2>
+    
+    <div class="resource-grid">
+      <div class="resource-card">
+        <h3><i class="fas fa-file-pdf"></i> Past Exam Papers</h3>
+        <ul class="resource-list" id="exam-papers-list">
+          <li><a href="#">Math Final 2024 <span class="badge">PDF</span></a></li>
+          <li><a href="#">English Midterm 2024 <span class="badge">PDF</span></a></li>
+          <li><a href="#">Biology Practice Test <span class="badge">PDF</span></a></li>
+        </ul>
+      </div>
+
+      <div class="resource-card">
+        <h3><i class="fas fa-video"></i> Study Guides</h3>
+        <ul class="resource-list" id="study-guides-list">
+          <li><a href="#">Algebra Cheat Sheet <span class="badge">PDF</span></a></li>
+          <li><a href="#">Chemistry Formulas <span class="badge">PDF</span></a></li>
+          <li><a href="#">Essay Writing Guide <span class="badge">Video</span></a></li>
+        </ul>
+      </div>
+
+      <div class="resource-card">
+        <h3><i class="fas fa-link"></i> Useful Links</h3>
+        <ul class="resource-list" id="useful-links-list">
+          <li><a href="#">Khan Academy</a></li>
+          <li><a href="#">Quizlet</a></li>
+          <li><a href="#">Desmos Calculator</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Resource Upload -->
+    <div class="card" style="margin-top: 2rem;">
+      <h3><i class="fas fa-upload"></i> Share a Resource</h3>
+      <div class="form-group">
+        <input type="text" placeholder="Resource title" id="resource-title">
+      </div>
+      <div class="form-group">
+        <select id="resource-type">
+          <option>Exam Paper</option>
+          <option>Study Guide</option>
+          <option>Link</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <input type="file" id="resource-file" accept=".pdf,.doc,.docx,.ppt,.pptx">
+      </div>
+      <button class="btn" onclick="uploadResource()"><i class="fas fa-upload"></i> Upload</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pomodoro Modal -->
+<div id="pomodoro-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2><i class="fas fa-clock"></i> Pomodoro Timer</h2>
+      <span class="close-modal" onclick="closePomodoroModal()">&times;</span>
+    </div>
+    <div class="pomodoro-timer">
+      <div class="timer-display" id="pomodoro-display">25:00</div>
+      <div style="text-align: center; margin: 1rem 0;">
+        <span id="pomodoro-phase" style="color: var(--accent-green);">Work Time</span>
+      </div>
+      <div class="timer-controls">
+        <button class="btn" onclick="startPomodoro()"><i class="fas fa-play"></i> Start</button>
+        <button class="btn btn-outline" onclick="pausePomodoro()"><i class="fas fa-pause"></i> Pause</button>
+        <button class="btn btn-outline" onclick="resetPomodoro()"><i class="fas fa-redo"></i> Reset</button>
+      </div>
+      <div style="margin-top: 1rem;">
+        <label><input type="radio" name="pomodoro-mode" value="25" checked> 25 min</label>
+        <label><input type="radio" name="pomodoro-mode" value="45"> 45 min</label>
+        <label><input type="radio" name="pomodoro-mode" value="60"> 60 min</label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Image Preview Modal -->
+<div id="image-modal" class="modal" onclick="this.classList.remove('active')">
+  <img id="modal-image" style="max-width: 90%; max-height: 90%; border-radius: 14px;">
+</div>
+
+<!-- Toast Notifications -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="logo" style="font-size: 1.8rem; margin-bottom: 1rem;" onclick="showSection('home')">
+    <i class="fas fa-graduation-cap"></i> BMC Study Buddy
+  </div>
+  <p>Brashier Middle College Student Project</p>
+  <p>© 2025 · Zoom Integration</p>
+  <div style="margin-top: 1rem;">
+    <a href="#" style="color: var(--text-secondary); margin: 0 0.5rem;">Privacy</a>
+    <a href="#" style="color: var(--text-secondary); margin: 0 0.5rem;">Terms</a>
+    <a href="#" style="color: var(--text-secondary); margin: 0 0.5rem;">Contact</a>
+  </div>
+</div>
+
+<!-- Socket.io library -->
+<script src="/socket.io/socket.io.js"></script>
+<!-- Our script -->
+<script src="script.js"></script>
+</body>
+</html>
