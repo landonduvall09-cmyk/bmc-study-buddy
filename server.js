@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -10,6 +11,16 @@ app.use(express.static('public'));
 
 const users = new Map();
 const nameToSocket = new Map();
+
+// Message persistence
+let savedMessages = {};
+try {
+  const data = fs.readFileSync('./messages.json', 'utf8');
+  savedMessages = JSON.parse(data);
+  console.log('Loaded saved messages');
+} catch (err) {
+  console.log('No existing messages file, starting fresh');
+}
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -34,6 +45,15 @@ io.on('connection', (socket) => {
       text: data.text,
       timestamp: Date.now()
     });
+    
+    // Save message to file
+    if (!savedMessages[data.room]) savedMessages[data.room] = [];
+    savedMessages[data.room].push({
+      user: data.user,
+      text: data.text,
+      timestamp: Date.now()
+    });
+    fs.writeFileSync('./messages.json', JSON.stringify(savedMessages, null, 2));
   });
 
   socket.on('disconnect', () => {
