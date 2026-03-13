@@ -674,8 +674,8 @@ const socket = io();
       renderOnlineUsers(onlineNames);
     }
 
-    // Function to accept friend request
-    function acceptFriendRequest(fromName) {
+    // Function to accept friend request - MADE GLOBAL with window.
+    window.acceptFriendRequest = function(fromName) {
       if (!currentUser) return;
       
       socket.emit('accept-friend-request', {
@@ -699,7 +699,11 @@ const socket = io();
       // Update UI
       buildChannelList();
       showToast(`You are now friends with ${fromName}! 🎉`, 'success');
-    }
+      
+      // Update online list
+      const onlineNames = [...document.querySelectorAll('.online-list li .name')].map(el => el.innerText.trim());
+      renderOnlineUsers(onlineNames);
+    };
 
     function addFriend(friendName) {
       if (!currentUser) return;
