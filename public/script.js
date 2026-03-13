@@ -657,9 +657,22 @@ const socket = io({
       onlineCount.innerText = usersList.length;
     }
 
-    // New function to send friend request
+    // Function to send friend request (updated to prevent duplicates)
     function sendFriendRequest(friendName) {
       if (!currentUser) return;
+      
+      // Check if already friends
+      const current = users.find(u => u.email === currentUser.email);
+      if (current.friends.includes(friendName)) {
+        showToast(`You're already friends with ${friendName}`, 'warning');
+        return;
+      }
+      
+      // Check if request already pending
+      if (pendingFriendRequests.includes(friendName)) {
+        showToast(`Friend request already sent to ${friendName}`, 'warning');
+        return;
+      }
       
       socket.emit('send-friend-request', {
         from: currentUser.name,
